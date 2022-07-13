@@ -1,33 +1,21 @@
 import folium
 import pandas as pd
 
-data = pd.read_csv('Volcanoes.txt')
+from utils.functoins import color_picker, change_radius
 
-lat = list(data["LAT"])
-lon = list(data["LON"])
-popup_mess = list(data["ELEV"])
+data = pd.read_csv('Ukrainian_cities.csv')
 
-def color_changer(elevation):
-    if elevation < 1000:
-        return 'green'
-    elif 1000 <= elevation < 3000:
-        return 'orange'
-    else:
-        return 'red'
+LAT = list(data['LAT'])
+LNG = list(data['LNG'])
+POPULATION = list(data['POPULATION'])
 
-map = folium.Map([0, 0], zoom_start=2, tiles="Stamen Terrain")
+map = folium.Map(location=[49.41963408010136, 31.45696761268942], tiles="OpenStreetMap", zoom_start=6.5)
+fg = folium.FeatureGroup(name='My map')
 
-fgv = folium.FeatureGroup(name='Volcanoes')
-for lt, ln, el in zip(lat, lon, popup_mess):
-    fgv.add_child(folium.CircleMarker(location=[lt, ln], radius=6, popup=el, fill=True, fill_color=color_changer(el), fill_opacity='0.7', color='gray'))
+for lt, ln, pop in zip(LAT, LNG, POPULATION):
+    fg.add_child(folium.CircleMarker(location=[lt, ln], radius=change_radius(pop), popup=f"Population: {pop}",
+                fill=True, fill_color=color_picker(pop), color='grey', fill_opacity=0.7))
 
-fgp = folium.FeatureGroup(name='Population')
-fgp.add_child(folium.GeoJson(data=open('world.json', 'r', encoding='utf-8-sig').read(),
-style_function= lambda x: {'fillColor': 'green' if x['properties']['POP2005'] < 10000000
-else 'orange' if 10000000 <= x['properties']['POP2005'] < 20000000 else 'red'}))
+map.add_child(fg)
 
-map.add_child(fgp)
-map.add_child(fgv)
-map.add_child(folium.LayerControl())
-
-map.save('map.html')
+map.save("map.html")
